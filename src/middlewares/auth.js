@@ -7,7 +7,8 @@ const userAuth = async (req, res, next) => {
     if (!token) {
       return res.status(401).send("Please Login!");
     }
-    const decodedMsg = await jwt.verify(token, "devTinder@125");
+
+    const decodedMsg = await jwt.verify(token, process.env.JWT_SECRET);
     if (!decodedMsg) {
       throw new Error("Invalid Credentials!");
     }

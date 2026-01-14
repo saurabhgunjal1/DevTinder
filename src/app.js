@@ -1,9 +1,11 @@
+require("dotenv").config();
+
 const express = require("express");
+
 const { connectDB } = require("./config/database");
 const cookieParser = require("cookie-parser");
 const JWT = require("jsonwebtoken");
 const cors = require("cors");
-
 const app = express();
 app.use(
   cors({
@@ -27,8 +29,11 @@ app.use("/", userRoute);
 connectDB()
   .then(() => {
     console.log("Database Connection established...");
-    app.listen(5000, () => {
-      console.log("Server is successfully listening on port 5000....");
+
+    app.listen(process.env.PORT, () => {
+      console.log(
+        `Server is successfully listening on port ${process.env.PORT}....`
+      );
     });
   })
   .catch((err) => {
