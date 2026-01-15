@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 const JWT = require("jsonwebtoken");
 const cors = require("cors");
 const app = express();
+require("./utils/cronJob");
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -21,11 +22,13 @@ const authRoute = require("./router/auth");
 const profileRoute = require("./router/profile");
 const requestRoute = require("./router/request");
 const userRoute = require("./router/user");
+const paymentRoute = require("./router/payment");
 
 app.use("/", authRoute);
 app.use("/", profileRoute);
 app.use("/", requestRoute);
 app.use("/", userRoute);
+app.use("/", paymentRoute);
 connectDB()
   .then(() => {
     console.log("Database Connection established...");
