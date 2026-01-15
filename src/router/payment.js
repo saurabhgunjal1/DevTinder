@@ -53,43 +53,52 @@ paymentRoute.post("/payment/create", userAuth, async (req, res) => {
   }
 });
 
-paymentRoute.post("/payment/webhook", async (req, res) => {
+paymentRouter.post("/payment/webhook", async (req, res) => {
   try {
     console.log("Webhook Called");
     const webhookSignature = req.get("X-Razorpay-Signature");
     console.log("Webhook Signature", webhookSignature);
-    const isWebHookValid = validateWebhookSignature(
+
+    const isWebhookValid = validateWebhookSignature(
       JSON.stringify(req.body),
       webhookSignature,
       process.env.RAZORPAY_WEBHOOK_SECERT
     );
 
-    if (!isWebHookValid) {
+    if (!isWebhookValid) {
       console.log("INvalid Webhook Signature");
-      return res.status(400).json({
-        msg: "webhook not valid!",
-      });
+      return res.status(400).json({ msg: "Webhook signature is invalid" });
     }
     console.log("Valid Webhook Signature");
+
+    // Udpate my payment Status in DB
     const paymentDetails = req.body.payload.payment.entity;
 
-    const payment = await Payment.findOne({
-      orderId: paymentDetails.order_id,
-    });
+    const payment = await Payment.findOne({ orderId: paymentDetails.order_id });
     payment.status = paymentDetails.status;
-
     await payment.save();
     console.log("Payment saved");
+
     const user = await User.findOne({ _id: payment.userId });
     user.isPremium = true;
     user.membershipType = payment.notes.membershipType;
     console.log("User saved");
+
     await user.save();
-    return res.status(200).json({ msg: "webhook recived succcessfully" });
-  } catch (error) {
-    return res.status(500).json({
-      msg: error.message,
-    });
+
+    // Update the user as premium
+
+    // if (req.body.event == "payment.captured") {
+    // }
+    // if (req.body.event == "payment.failed") {
+    // }
+
+    // return success response to razorpay
+
+    return res.status(200).json({ msg: "Webhook received successfully" });
+  } catch (err) {
+    return res.status(500).json({ msg: err.message });
   }
 });
+
 module.exports = paymentRoute;
