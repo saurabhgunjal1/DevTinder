@@ -72,30 +72,20 @@ paymentRoute.post("/payment/webhook", async (req, res) => {
 
     console.log("Valid Webhook Signature");
 
-    const event = JSON.parse(req.body.toString()).event;
-    const payload = JSON.parse(req.body.toString()).payload;
+    // Udpate my payment Status in DB
+    const paymentDetails = req.body.payload.payment.entity;
 
-    if (event === "payment.captured") {
-      const paymentDetails = payload.payment.entity;
+    const payment = await Payment.findOne({ orderId: paymentDetails.order_id });
+    payment.status = paymentDetails.status;
+    await payment.save();
+    console.log("Payment saved");
 
-      const payment = await Payment.findOne({
-        orderId: paymentDetails.order_id,
-      });
+    const user = await User.findOne({ _id: payment.userId });
+    user.isPremium = true;
+    user.membershipType = payment.notes.membershipType;
+    console.log("User saved");
 
-      if (!payment) {
-        return res.status(404).json({ msg: "Payment not found" });
-      }
-
-      payment.status = "captured";
-      await payment.save();
-
-      const user = await User.findById(payment.userId);
-      user.isPremium = true;
-      user.membershipType = payment.notes.membershipType;
-      await user.save();
-
-      console.log("Payment & User updated successfully");
-    }
+    await user.save();
 
     return res.status(200).json({ msg: "Webhook processed" });
   } catch (err) {
